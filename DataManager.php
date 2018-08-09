@@ -86,7 +86,7 @@ class DataManager{
 		return false;
     }
 	
-    function scanFolder($path, $arrayClean = false, $recursive = false){
+    public static function scanFolder($path, $arrayClean = false, $recursive = false){
         $array = glob($path . self::DIR_SEP . "*");    
         foreach($array as $key => $value){
             if(self::exist($value) == "FILE" && !$arrayClean){
