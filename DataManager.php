@@ -5,12 +5,12 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araújo
-	Date: 2018-08-07
+	Date: 2018-08-09
 */
 
-class SystemFilesPHP{
+class DataManager{
 
-	const D_S = DIRECTORY_SEPARATOR;
+	const DIR_SEP = DIRECTORY_SEPARATOR;
 
     public static function exist($path){
         if(file_exists($path) && is_file($path)){
@@ -87,11 +87,11 @@ class SystemFilesPHP{
     }
 	
     function scanFolder($path, $arrayClean = false, $recursive = false){
-        $array = glob($path . self::D_S . "*");    
+        $array = glob($path . self::DIR_SEP . "*");    
         foreach($array as $key => $value){
             if(self::exist($value) == "FILE" && !$arrayClean){
                 $array[$key] = [
-                    "src" => pathinfo($value)["dirname"] . self::D_S,
+                    "src" => pathinfo($value)["dirname"] . self::DIR_SEP,
                     "name" => pathinfo($value)["basename"],
 					"type" => "FILE",
 					"perm" => self::perm($value),
@@ -101,7 +101,7 @@ class SystemFilesPHP{
             }else if(self::exist($value) == "FOLDER"){
 				if(!$arrayClean){
 					$array[$key] = [
-						"src" => pathinfo($value)["dirname"] . self::D_S,
+						"src" => pathinfo($value)["dirname"] . self::DIR_SEP,
 						"name" => pathinfo($value)["basename"],
 						"type" => "FOLDER",
 						"perm" => self::perm($value),
