@@ -5,15 +5,15 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araújo
-	Date: 2018-08-07
+	Date: 2018-08-09
 */
 
 //Changing "php.ini" during execution
 ini_set('max_execution_time', 0);
 ini_set('memory_limit', '256M');
 
-//Example of using the SystemFilesPHP library
-require_once "SystemFilesPHP.php"; //Requesting SystemFilesPHP library
+//Requesting DataManager library
+require_once "DataManager.php";
 
 //Vector with result of the use of each method
 $array = [];
@@ -25,55 +25,55 @@ $time = 1000000 * 0.25;
 $valueTest = "Testando LIB Sistema de arquivos";
 
 //Creating a file of [name, value]
-$array[] = SystemFilesPHP::createFile("a.txt", $valueTest . " ID: " . uniqid());
+$array[] = DataManager::createFile("a.txt", $valueTest . " ID: " . uniqid());
 
 //Wait for
 usleep($time);
 
 //Writing a file of [name, value]
-$array[] = SystemFilesPHP::writeFile("a.txt", $valueTest . " ID: " . uniqid());
+$array[] = DataManager::writeFile("a.txt", $valueTest . " ID: " . uniqid());
 
 //Wait for
 usleep($time);
 
 //Adding in the file of [name, value]
-$array[] = SystemFilesPHP::appendFile("a.txt", "\r\n" . $valueTest . " ID: " . uniqid());
+$array[] = DataManager::appendFile("a.txt", "\r\n" . $valueTest . " ID: " . uniqid());
 
 //Wait for
 usleep($time);
 
 //Reading the file of [name, additional parameter]
-$array[] = SystemFilesPHP::readFile("a.txt");
+$array[] = DataManager::readFile("a.txt");
 
 //Wait for
 usleep($time);
 
 //Creating a folder of [name]
-$array[] = SystemFilesPHP::createFolder("b");
+$array[] = DataManager::createFolder("b");
 
 //Wait for
 usleep($time);
 
 //Copy [from, to]
-$array[] = SystemFilesPHP::copy("a.txt", "b/a.txt");
+$array[] = DataManager::copy("a.txt", "b/a.txt");
 
 //Wait for
 usleep($time);
 
 //Delete [file or folder]
-$array[] = SystemFilesPHP::delete("a.txt");
+$array[] = DataManager::delete("a.txt");
 
 //Wait for
 usleep($time);
 
 //Size [of]
-$array[] = SystemFilesPHP::size("b/");
+$array[] = DataManager::size("b/");
 
 //Wait for
 usleep($time);
 
 //Create zip from [name, [data vector], password]
-$array[] = SystemFilesPHP::createZip("pasta (b).zip", [
+$array[] = DataManager::createZip("pasta (b).zip", [
     "b/",
     ["DEVELOPER.txt", "Matheus Johann Araújo"]
 ], 123);
@@ -82,49 +82,49 @@ $array[] = SystemFilesPHP::createZip("pasta (b).zip", [
 usleep($time);
 
 //Extract from zip [from, to, optional password]
-$array[] = SystemFilesPHP::extractZip("pasta (b).zip", "pasta (b)/", 123);
+$array[] = DataManager::extractZip("pasta (b).zip", "pasta (b)/", 123);
 
 //Wait for
 usleep($time);
 
 //Change the permission [from, to such value optional]
-$array[] = SystemFilesPHP::perm("b/", 0777);
+$array[] = DataManager::perm("b/", 0777);
 
 //Wait for
 usleep($time);
 
 //List the files and folders [from, optional detailed list, optional recursive list]
-$array[] = SystemFilesPHP::scanFolder(".", false, true);
+$array[] = DataManager::scanFolder(".", false, true);
 
 //Wait for
 usleep($time);
 
 //Move [from, to]
-$array[] = SystemFilesPHP::move("b/a.txt", "a.txt");
+$array[] = DataManager::move("b/a.txt", "a.txt");
 
 //Wait for
 usleep($time);
 
 //Delete [file or folder]
-$array[] = SystemFilesPHP::delete("b/");
+$array[] = DataManager::delete("b/");
 
 //Wait for
 usleep($time);
 
 //Delete [file or folder]
-$array[] = SystemFilesPHP::delete("a.txt");
+$array[] = DataManager::delete("a.txt");
 
 //Wait for
 usleep($time);
 
 //Delete [file or folder]
-$array[] = SystemFilesPHP::delete("pasta (b).zip");
+$array[] = DataManager::delete("pasta (b).zip");
 
 //Wait for
 usleep($time);
 
 //Delete [file or folder]
-$array[] = SystemFilesPHP::delete("pasta (b)/");
+$array[] = DataManager::delete("pasta (b)/");
 
 //Showing results
 echo "<pre>";
