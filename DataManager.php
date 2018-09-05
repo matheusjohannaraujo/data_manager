@@ -5,7 +5,7 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araújo
-	Date: 2018-08-09
+	Date: 2018-09-05
 */
 
 class DataManager{
@@ -13,12 +13,14 @@ class DataManager{
 	const DIR_SEP = DIRECTORY_SEPARATOR;
 
     public static function exist($path){
-        if(file_exists($path) && is_file($path)){
-            return "FILE";
-        }
-        if(file_exists($path) && is_dir($path)){
-            return "FOLDER";
-        }
+		if(gettype($path) != "resource"){
+			if(file_exists($path) && is_file($path)){
+				return "FILE";
+			}
+			if(file_exists($path) && is_dir($path)){
+				return "FOLDER";
+			}
+		}        
 		return false;
 	}
 
@@ -59,8 +61,8 @@ class DataManager{
 		return false;
     }
 	
-    public static function readFile($path, $return = 1, $mode = "r"){
-		if(self::exist($path) && is_integer($return) && ($mode == "r" || $mode == "r+")){
+    public static function readFile($path, $return = 1, $mode = "rb"){
+		if(self::exist($path) && is_integer($return) && ($mode == "rb" || $mode == "r" || $mode == "r+")){
 			switch($return){
 				case 1:
 					$handle = fopen($path, $mode);
@@ -126,7 +128,6 @@ class DataManager{
 				$passStatus = $zip->setPassword($passZip);
 			}
 			$fANON = function($zip, $path, $fANON, $passStatus, $dir = DIRECTORY_SEPARATOR){
-				$path = realpath($path);
 				if(is_dir($path)){
 					$name = pathinfo($path)["basename"] . DIRECTORY_SEPARATOR;
 					$array = glob($path . DIRECTORY_SEPARATOR .  "*");
@@ -147,11 +148,15 @@ class DataManager{
 			};
 			foreach ($array as $key => $value) {
 				if(is_array($value)){
-					$zip->addFromString($value[0], $value[1]);
+					if(file_exists($value[1]) && is_file($value[1])){
+						$zip->addFile($value[1], $value[0]);
+					}else{
+						$zip->addFromString($value[0], $value[1]);
+					}					
 					if($passStatus){
 						$zip->setEncryptionName($value[0], ZipArchive::EM_AES_256);
 					}                
-				}else if(is_string($value) && file_exists($value)){
+				}else if(file_exists($value) && is_dir($value)){
 					$fANON($zip, $value, $fANON, $passStatus);
 				}
 			}        
@@ -169,6 +174,33 @@ class DataManager{
 				$zip->setPassword($passZip);
 			}
 			$return = $zip->extractTo($pathExtract);
+			$zip->close();
+		}
+		return $return;
+	}
+
+	public static function listZip($pathZip, $mode = 1, $passZip = ""){
+		$return = false;
+		$zip = new ZipArchive();
+		if($zip->open($pathZip)){
+			if($passZip != ""){
+				$zip->setPassword($passZip);
+			}
+			$return = [];
+			for ($i = 0, $j = $zip->numFiles; $i < $j; $i++) {
+				$status = $zip->statIndex($i);
+				$status["size"] = self::size($zip->getStream($status["name"]), false);
+				switch($mode){
+					case 1:
+						$return[] = $status;
+						break;
+					case 2:						
+						$return[] = [$status, $zip->getStream($status["name"])];
+						break;
+					case 3:
+						$return[] = [$status, $zip->getFromName($zip->getNameIndex($i))];
+				}
+			}
 			$zip->close();
 		}
 		return $return;
@@ -231,33 +263,86 @@ class DataManager{
 		return false;
     }
 	
-	public static function size($path){
+	public static function size($path, $convert = true){
 		$bytes = 0;
         if(self::exist($path) == "FOLDER"){
 			$array = self::scanFolder($path, true, true);
 			for ($i = count($array) - 1, $j = 0; $i >= $j; $i--) {
 				if(self::exist($array[$i]) == "FILE"){
-					$bytes += filesize($array[$i]);
+					$x = self::realFileSize($array[$i]);
+					if($x < 0){
+						$x *= -1;
+					}
+					$bytes += $x;
 				}
 				unset($array[$i]);
 			}
         }else if(self::exist($path) == "FILE"){
-            $bytes = filesize($path);
-        }
-        if($bytes >= 1073741824){
-            $bytes = number_format($bytes / 1073741824, 2) . ' GB';
-        }else if($bytes >= 1048576){
-            $bytes = number_format($bytes / 1048576, 2) . ' MB';
-        }else if($bytes >= 1024){
-            $bytes = number_format($bytes / 1024, 2) . ' KB';
-        }else if($bytes > 1){
-            $bytes = $bytes . ' bytes';
-        }else if ($bytes == 1){
-            $bytes = $bytes . ' byte';
-        }else{
-            $bytes = '0 bytes';
-        }
+			$bytes = self::realFileSize($path);
+			if($bytes < 0){
+				$bytes *= -1;
+			}
+		}else if(is_numeric($path)){
+			$bytes = $path;
+			if($bytes < 0){
+				$bytes *= -1;
+			}
+		}else if(gettype($path) == "resource"){
+			$bytes = self::realFileSize($path);
+		}
+		if($convert){
+			if($bytes >= 1073741824){
+				$bytes = number_format($bytes / 1073741824, 2) . ' GB';
+			}else if($bytes >= 1048576){
+				$bytes = number_format($bytes / 1048576, 2) . ' MB';
+			}else if($bytes >= 1024){
+				$bytes = number_format($bytes / 1024, 2) . ' KB';
+			}else if($bytes > 1){
+				$bytes = $bytes . ' bytes';
+			}else if ($bytes == 1){
+				$bytes = $bytes . ' byte';
+			}else{
+				$bytes = '0 bytes';
+			}
+		}        
         return $bytes;
+	}
+
+	private static function realFileSize($path){
+		if(self::exist($path) == "FILE"){
+			$size = filesize($path);
+			if (!($file = fopen($path, 'rb')))
+				return false;
+
+			if ($size >= 0){//Check if it really is a small file (< 2 GB)
+				if (fseek($file, 0, SEEK_END) === 0){//It really is a small file
+					fclose($file);
+					return $size;
+				}
+			}
+		
+			//Quickly jump the first 2 GB with fseek. After that fseek is not working on 32 bit php (it uses int internally)
+			$size = PHP_INT_MAX - 1;
+			if (fseek($file, PHP_INT_MAX - 1) !== 0){
+				fclose($file);
+				return false;
+			}
+			
+		}else if(gettype($path) == "resource"){
+			$file = $path;
+			$size = 0;
+		}
+
+		$read = "";
+		$length = 8192;
+		while (!feof($file)){//Read the file until end
+			$read = fread($file, $length);
+			$size = bcadd($size, $length);
+		}
+		$size = bcsub($size, $length);
+		$size = bcadd($size, strlen($read));
+		fclose($file);
+		return $size;
 	}
 
     public static function rename($path, $newPath){
