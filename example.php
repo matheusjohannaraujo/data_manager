@@ -5,11 +5,13 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araújo
-	Date: 2018-08-09
+	Date: 2018-09-05
 */
 
 //Changing "php.ini" during execution
-ini_set('max_execution_time', 0);
+ini_set("set_time_limit", 0);
+ini_set("max_execution_time", 0);
+ini_set("default_socket_timeout", 0);
 ini_set('memory_limit', '256M');
 
 //Requesting DataManager library
@@ -76,13 +78,19 @@ usleep($time);
 $array[] = DataManager::createZip("pasta (b).zip", [
     "b/",
     ["DEVELOPER.txt", "Matheus Johann Araújo"]
-], 123);
+]);
 
 //Wait for
 usleep($time);
 
 //Extract from zip [from, to, optional password]
-$array[] = DataManager::extractZip("pasta (b).zip", "pasta (b)/", 123);
+$array[] = DataManager::extractZip("pasta (b).zip", "pasta (b)/");
+
+//Wait for
+usleep($time);
+
+//Lists the zip files and folders [name, optional list mode, optional password]
+$array[] = DataManager::listZip("pasta (b).zip", 3);
 
 //Wait for
 usleep($time);
