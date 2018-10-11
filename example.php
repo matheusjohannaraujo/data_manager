@@ -1,10 +1,10 @@
 <?php
 
 /*
-	GitHub: https://github.com/matheusjohannaraujo
+	Bitbucket: https://bitbucket.org/matheusjohannaraujo/data_manager/
 	Country: Brasil
 	State: Pernambuco
-	Developer: Matheus Johann AraÃºjo
+	Developer: Matheus Johann Araújo
 	Date: 2018-09-05
 */
 
@@ -77,7 +77,7 @@ usleep($time);
 //Create zip from [name, [data vector], password]
 $array[] = DataManager::createZip("pasta (b).zip", [
     "b/",
-    ["DEVELOPER.txt", "Matheus Johann AraÃºjo"]
+    ["DEVELOPER.txt", "Matheus Johann Araújo"]
 ]);
 
 //Wait for
