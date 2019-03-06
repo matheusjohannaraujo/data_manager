@@ -1,13 +1,5 @@
 <?php
 
-/*
-	Bitbucket: https://bitbucket.org/matheusjohannaraujo/data_manager/
-	Country: Brasil
-	State: Pernambuco
-	Developer: Matheus Johann Araújo
-	Date: 2018-09-05
-*/
-
 //Changing "php.ini" during execution
 ini_set("set_time_limit", 0);
 ini_set("max_execution_time", 0);
@@ -77,7 +69,7 @@ usleep($time);
 //Create zip from [name, [data vector], password]
 $array[] = DataManager::createZip("pasta (b).zip", [
     "b/",
-    ["DEVELOPER.txt", "Matheus Johann Araújo"]
+    ["DEVELOPER.txt", "Matheus Johann AraÃºjo"]
 ]);
 
 //Wait for
