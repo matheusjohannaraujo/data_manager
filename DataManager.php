@@ -1,13 +1,5 @@
 <?php
 
-/*
-	Bitbucket: https://bitbucket.org/matheusjohannaraujo/data_manager/
-	Country: Brasil
-	State: Pernambuco
-	Developer: Matheus Johann Araújo
-	Date: 2018-09-05
-*/
-
 class DataManager{
 
 	const DIR_SEP = DIRECTORY_SEPARATOR;
