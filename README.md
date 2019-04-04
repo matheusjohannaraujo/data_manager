@@ -1,6 +1,6 @@
 https://github.com/matheusjohannaraujo/data_manager
 
-Country: Brasil
+Country: Brasil<br>
 State: Pernambuco
 Developer: Matheus Johann Araújo
 Date: 2018-09-05
