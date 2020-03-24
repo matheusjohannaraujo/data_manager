@@ -5,7 +5,7 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araújo
-	Date: 2020-02-16
+	Date: 2020-03-23
 */
 
 class DataManager{
@@ -358,7 +358,13 @@ class DataManager{
     }
 	
     public static function folderScan($path, $arrayClean = false, $recursive = false){
-		$array = glob(self::path($path) . "*");
+		$array = glob(self::path($path) . "*");		
+		foreach (glob(self::path($path) . ".*") as $value) {
+			$basename = pathinfo($value)["basename"];
+			if($basename != "." && $basename != ".." && (self::exist($value) == "FILE" || self::exist($value) == "FOLDER")){
+				$array[] = $value;
+			}
+		}
 		sort($array, SORT_NATURAL);
 		if($recursive || !$arrayClean){
 			foreach($array as $key => $value){
@@ -394,6 +400,9 @@ class DataManager{
 	public static function zipCreate($path, $array, $passZip = ""){
 		$return = false;
 		$zip = new ZipArchive();
+		if(is_string($array)){
+			$array = [$array];
+		}
 		if ($zip->open($path, ZIPARCHIVE::CREATE) && is_array($array)) {
 			$passStatus = false;
 			if($passZip != ""){
@@ -403,6 +412,13 @@ class DataManager{
 				if(is_dir($path)){
 					$name = pathinfo($path)["basename"] . DIRECTORY_SEPARATOR;
 					$array = glob($path . DIRECTORY_SEPARATOR .  "*");
+					foreach (glob($path . DIRECTORY_SEPARATOR . ".*") as $value) {
+						$basename = pathinfo($value)["basename"];
+						if($basename != "." && $basename != ".." && (self::exist($value) == "FILE" || self::exist($value) == "FOLDER")){
+							$array[] = $value;
+						}
+					}
+					sort($array, SORT_NATURAL);
 					foreach($array as $key => $value){
 						$zipValue = $dir . $name;
 						if(file_exists($value) && is_file($value)){
@@ -412,25 +428,30 @@ class DataManager{
 								$zip->setEncryptionName($zipValue . pathinfo($value)["basename"], ZipArchive::EM_AES_256);
 							}                        
 						}else if(file_exists($value) && is_dir($value)){
-							var_dump($value);
+							//var_dump($value);
 							//echo "DIR: ", $value, " = ", $zipValue . pathinfo($value)["basename"], "<br>";
 							$fANON($zip, $value, $fANON, $passStatus, $zipValue);
 						}
 					}
 				}
 			};
-			foreach ($array as $key => $value) {
-				if(is_array($value)){
-					if(file_exists($value[1]) && is_file($value[1])){
-						$zip->addFile($value[1], $value[0]);
-					}else{
+			foreach ($array as $value) {
+				if(is_string($value)){
+					if(file_exists($value) && is_file($value)){// FILE
+						$zip->addFile($value, pathinfo($value)['basename']);
+						if($passStatus){
+							$zip->setEncryptionName($value, ZipArchive::EM_AES_256);
+						}
+					}else if(file_exists($value) && is_dir($value)){// FOLDER
+						$fANON($zip, $value, $fANON, $passStatus);
+					}
+				}else if(is_array($value)){
+					if(!file_exists($value[1]) && !is_file($value[1])){// FILE AND STRING
 						$zip->addFromString($value[0], $value[1]);
+						if($passStatus){
+							$zip->setEncryptionName($value[0], ZipArchive::EM_AES_256);
+						}
 					}					
-					if($passStatus){
-						$zip->setEncryptionName($value[0], ZipArchive::EM_AES_256);
-					}                
-				}else if(file_exists($value) && is_dir($value)){
-					$fANON($zip, $value, $fANON, $passStatus);
 				}
 			}        
 			$return = $zip->numFiles;
