@@ -5,7 +5,7 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araújo
-	Date: 2020-03-23
+	Date: 2020-03-31
 */
 
 class DataManager{
@@ -33,14 +33,20 @@ class DataManager{
 		if(self::exist($path) == "FILE"){
 			return unlink($path);
 		}else if(self::exist($path) == "FOLDER"){
-			$array = self::folderScan($path, true, true);
-			for ($i = count($array) - 1, $j = 0, $value = null; $i >= $j; $i--) {
-				$value = $array[$i];
-				//print_r($value);
-				if(self::exist($value) == "FILE"){
-					unlink($value);
-				}else if(self::exist($value) == "FOLDER"){
-					rmdir($value);
+			$scanSuperficie = self::folderScan($path, true, false);			
+			for ($i = count($scanSuperficie) - 1, $j = 0; $i >= $j; $i--) {
+				if(self::exist($scanSuperficie[$i]) == "FILE"){
+					unlink($scanSuperficie[$i]);
+				}else if(self::exist($scanSuperficie[$i]) == "FOLDER"){
+					$scanProfundo = self::folderScan($scanSuperficie[$i], true, true);
+					for ($k = count($scanProfundo) - 1, $l = 0; $k >= $l; $k--) {
+						if(self::exist($scanProfundo[$k]) == "FILE"){
+							unlink($scanProfundo[$k]);
+						}else if(self::exist($scanProfundo[$k]) == "FOLDER"){
+							rmdir($scanProfundo[$k]);
+						}
+					}
+					rmdir($scanSuperficie[$i]);
 				}
 			}
 			return rmdir($path);
@@ -152,10 +158,10 @@ class DataManager{
 
 	public static function path($path){
 		if(is_string($path))
-			$path = str_replace(["\\", "/"], DIRECTORY_SEPARATOR, $path);
+			$path = str_replace(["\\", "/"], "/", $path);
 		if(self::exist($path) == "FOLDER")
 			if(substr($path, -1) != "/" && substr($path, -1) != "\\")
-				$path .= DIRECTORY_SEPARATOR;
+				$path .= "/";
 		return $path;
 	}
 
@@ -370,7 +376,7 @@ class DataManager{
 			foreach($array as $key => $value){
 				if(self::exist($value) == "FILE" && !$arrayClean){
 					$array[$key] = [
-						"src" => pathinfo($value)["dirname"] . DIRECTORY_SEPARATOR,
+						"src" => pathinfo($value)["dirname"] . "/",
 						"name" => pathinfo($value)["basename"],
 						"type" => "FILE",
 						"perm" => self::perm($value),
@@ -380,7 +386,7 @@ class DataManager{
 				}else if(self::exist($value) == "FOLDER"){
 					if(!$arrayClean){
 						$array[$key] = [
-							"src" => pathinfo($value)["dirname"] . DIRECTORY_SEPARATOR,
+							"src" => pathinfo($value)["dirname"] . "/",
 							"name" => pathinfo($value)["basename"],
 							"type" => "FOLDER",
 							"perm" => self::perm($value),
@@ -410,9 +416,9 @@ class DataManager{
 			}
 			$fANON = function($zip, $path, $fANON, $passStatus, $dir = ""){
 				if(is_dir($path)){
-					$name = pathinfo($path)["basename"] . DIRECTORY_SEPARATOR;
-					$array = glob($path . DIRECTORY_SEPARATOR .  "*");
-					foreach (glob($path . DIRECTORY_SEPARATOR . ".*") as $value) {
+					$name = pathinfo($path)["basename"] . "/";
+					$array = glob($path . "/" .  "*");
+					foreach (glob($path . "/" . ".*") as $value) {
 						$basename = pathinfo($value)["basename"];
 						if($basename != "." && $basename != ".." && (self::exist($value) == "FILE" || self::exist($value) == "FOLDER")){
 							$array[] = $value;
