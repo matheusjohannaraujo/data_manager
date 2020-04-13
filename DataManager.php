@@ -18,7 +18,7 @@ class DataManager {
 			if(file_exists($path) && is_dir($path)){
 				return "FOLDER";
 			}
-		}        
+		}
 		return false;
 	}
 
@@ -28,12 +28,12 @@ class DataManager {
 		}
 		return false;
     }
-	
+
     public static function delete($path){
 		if(self::exist($path) == "FILE"){
 			return unlink($path);
 		}else if(self::exist($path) == "FOLDER"){
-			$scanSuperficie = self::folderScan($path, true, false);			
+			$scanSuperficie = self::folderScan($path, true, false);
 			for ($i = count($scanSuperficie) - 1, $j = 0; $i >= $j; $i--) {
 				if(self::exist($scanSuperficie[$i]) == "FILE"){
 					unlink($scanSuperficie[$i]);
@@ -89,38 +89,19 @@ class DataManager {
 	}
 
     public static function move($path, $newPath){
-		if(self::exist($path) == "FILE"){
-			if(self::exist($newPath) == "FOLDER"){
-				$newPath = self::path($newPath) . pathinfo($path)['basename'];
-			}
-            if(copy($path, $newPath))
-                return unlink($path);
-        }else if(self::exist($path) == "FOLDER"){
-			$path = self::path($path);
-			$newPath = self::path($newPath);
-			if(!self::exist($newPath)){
-				self::folderCreate($newPath);
-			}
-			$array = self::folderScan($path, true, true);
-			foreach ($array as $key => $value) {
-				if(self::exist($value) == "FOLDER"){
-					self::folderCreate(str_replace($path, $newPath, $value));
-				}else if(self::exist($value) == "FILE"){
-					copy($value, str_replace($path, $newPath, $value));
-				}
-			}
+		if(self::copy($path, $newPath)){
 			return self::delete($path);
 		}
 		return false;
 	}
-	
+
     public static function time($path){
 		if(self::exist($path)){
 			return date("d/m/Y H:i:s", filectime($path));
 		}
 		return false;
     }
-	
+
 	public static function size($path, $convert = true, $precision = true){
 		$bytes = 0;
         if(self::exist($path) == "FOLDER"){
@@ -162,7 +143,7 @@ class DataManager {
 			}else{
 				$bytes = '0 bytes';
 			}
-		}        
+		}
         return $bytes;
 	}
 
@@ -181,24 +162,24 @@ class DataManager {
 		}
 		return false;
     }
-	
+
     public static function fileWrite($path, $write = "", $mode = "w"){
 		if(self::exist($path) != "FOLDER" && $mode == "w" || $mode == "w+"){
 			$handle = fopen($path, $mode);
 			if(is_array($write)){
 				foreach($write as $key => $value){
 					fwrite($handle, $value);
-				}	
+				}
 			}else if(is_string($write) || is_numeric($write)){
 				fwrite($handle, $write);
-			}				
+			}
 			return fclose($handle);
 		}
 		return false;
 	}
-	
+
 	private static $vetFileAppend = [];
-	
+
     public static function fileAppend($path, $append = "", $close = true, $mode = "a"){
 		if(self::exist($path) != "FOLDER" && ($mode == "a" || $mode == "a+")){
 			$faName = md5($path);
@@ -208,7 +189,7 @@ class DataManager {
 			if(is_array($append)){
 				foreach($append as $key => $value){
 					fwrite(self::$vetFileAppend[$faName], $value);
-				}	
+				}
 			}else if(is_string($append) || is_numeric($append)){
 				fwrite(self::$vetFileAppend[$faName], $append);
 			}
@@ -219,7 +200,7 @@ class DataManager {
 		}
 		return false;
 	}
-	
+
 	public static function fileAppendClose($path){
 		$faName = md5($path);
 		$handle = self::$vetFileAppend[$faName] ?? false;
@@ -227,11 +208,11 @@ class DataManager {
 			if(fclose($handle)){
 				unset(self::$vetFileAppend[$faName]);
 				return true;
-			}			
+			}
 		}
 		return false;
 	}
-	
+
     public static function fileRead($path, $return = 1, $callback = false, $mode = "rb"){
 		if(self::exist($path) == "FILE" && is_integer($return) && ($mode == "rb" || $mode == "r" || $mode == "r+")){
 			switch($return){
@@ -255,7 +236,7 @@ class DataManager {
 						return true;
 					}
 			}
-		}		
+		}
 		return false;
 	}
 
@@ -266,25 +247,25 @@ class DataManager {
 				return $size;
 			if (!($file = fopen($path, 'rb')))
 				return false;
-			if ($size >= 0){//Check if it really is a small file (< 2 GB)
-				if (fseek($file, 0, SEEK_END) === 0){//It really is a small file
+			if ($size >= 0){// Check if it really is a small file (< 2 GB)
+				if (fseek($file, 0, SEEK_END) === 0){// It really is a small file
 					fclose($file);
 					return $size;
 				}
-			}		
-			//Quickly jump the first 2 GB with fseek. After that fseek is not working on 32 bit php (it uses int internally)
+			}
+			// Quickly jump the first 2 GB with fseek. After that fseek is not working on 32 bit php (it uses int internally)
 			$size = PHP_INT_MAX - 1;
 			if (fseek($file, PHP_INT_MAX - 1) !== 0){
 				fclose($file);
 				return false;
-			}			
+			}
 		}else if(gettype($path) == "resource"){
 			$file = $path;
 			$size = 0;
 		}
 		$read = "";
 		$length = 8192;
-		while (!feof($file)){//Read the file until end
+		while (!feof($file)){// Read the file until end
 			$read = fread($file, $length);
 			$size = bcadd($size, $length);
 		}
@@ -293,7 +274,7 @@ class DataManager {
 		fclose($file);
 		return $size;
 	}
- 
+
 	public static function fileEncodeBase64($path, $del = false){
 		if(self::exist($path) == "FILE"){
 			$newName = "enc_" . uniqid() . "." . pathinfo($path)["extension"];
@@ -306,9 +287,9 @@ class DataManager {
 					if(rename($newName, $path))
 						$newName = $path;
 			return $newName;
-		}    
+		}
 	}
-	
+
 	public static function fileDecodeBase64($path, $del = false){
 		if(self::exist($path) == "FILE"){
 			$newName = "dec_" . uniqid() . "." . pathinfo($path)["extension"];
@@ -321,7 +302,7 @@ class DataManager {
 					if(rename($newName, $path))
 						$newName = $path;
 			return $newName;
-		}		
+		}
 	}
 
 	public static function fileSplit($path, $buffer = 1){
@@ -351,7 +332,7 @@ class DataManager {
 			$files = self::folderScan($path, true);
 			$file0 = pathinfo($files[0]);
 			$newName = $dirname . "join_" . $file0["filename"];
-			for ($i = 0, $j = count($files); $i < $j; $i++) { 
+			for ($i = 0, $j = count($files); $i < $j; $i++) {
 				self::fileRead($files[$i], 4, function ($key, $value) use ($newName) {
 					self::fileAppend($newName, $value, false);
 				});
@@ -372,9 +353,9 @@ class DataManager {
 		}
 		return false;
     }
-	
+
     public static function folderScan($path, $arrayClean = false, $recursive = false){
-		$array = glob(self::path($path) . "*");		
+		$array = glob(self::path($path) . "*");
 		foreach (glob(self::path($path) . ".*") as $value) {
 			$basename = pathinfo($value)["basename"];
 			if($basename != "." && $basename != ".." && (self::exist($value) == "FILE" || self::exist($value) == "FOLDER")){
@@ -386,33 +367,53 @@ class DataManager {
 			foreach($array as $key => $value){
 				if(self::exist($value) == "FILE" && !$arrayClean){
 					$array[$key] = [
+						"md5" => self::fileMd5($value),
 						"src" => pathinfo($value)["dirname"] . "/",
 						"name" => pathinfo($value)["basename"],
+						"path" => $value,
 						"type" => "FILE",
 						"perm" => self::perm($value),
-						"size" => self::size($value),                    
-						"time" => self::time($value)
+						"size" => self::size($value),
+						"time" => self::time($value)						
 					];
 				}else if(self::exist($value) == "FOLDER"){
 					if(!$arrayClean){
 						$array[$key] = [
+							"md5" => self::folderMd5($value),
 							"src" => pathinfo($value)["dirname"] . "/",
 							"name" => pathinfo($value)["basename"],
+							"path" => $value,
 							"type" => "FOLDER",
 							"perm" => self::perm($value),
 							"size" => self::size($value),
 							"time" => self::time($value)
 						];
-					}                
+					}
 					if($recursive){
 						$array = array_merge($array, self::folderScan($value, $arrayClean, $recursive));
 					}
-				}    
+				}
 			}
-		}        
+		}
         return $array;
 	}
-	
+
+	public static function folderMd5($path){
+		$array = self::folderScan($path, true, true);
+		foreach($array as $key => $value){
+			if(self::exist($value) == "FILE"){
+				$value = md5(md5($value) . self::fileMd5($value));
+				$array[$key] = $value;
+			}else if(self::exist($value) == "FOLDER"){
+				$array[$key] = md5($value);
+			}
+		}
+		if(is_array($array) && count($array) > 0){
+			return md5(implode('', $array));
+		}
+		return false;
+	}
+
 	public static function zipCreate($path, $array, $passZip = ""){
 		$return = false;
 		$zip = new ZipArchive();
@@ -442,7 +443,7 @@ class DataManager {
 							$zip->addFile($value, $zipValue . pathinfo($value)["basename"]);
 							if($passStatus){
 								$zip->setEncryptionName($zipValue . pathinfo($value)["basename"], ZipArchive::EM_AES_256);
-							}                        
+							}
 						}else if(file_exists($value) && is_dir($value)){
 							//var_dump($value);
 							//echo "DIR: ", $value, " = ", $zipValue . pathinfo($value)["basename"], "<br>";
@@ -467,12 +468,12 @@ class DataManager {
 						if($passStatus){
 							$zip->setEncryptionName($value[0], ZipArchive::EM_AES_256);
 						}
-					}					
+					}
 				}
-			}        
+			}
 			$return = $zip->numFiles;
 			$zip->close();
-		}    
+		}
 		return $return;
 	}
 
@@ -504,7 +505,7 @@ class DataManager {
 					case 1:
 						$return[] = $status;
 						break;
-					case 2:						
+					case 2:
 						$return[] = [$status, $zip->getStream($status["name"])];
 						break;
 					case 3:
@@ -515,5 +516,5 @@ class DataManager {
 		}
 		return $return;
 	}
-	
+
 }
