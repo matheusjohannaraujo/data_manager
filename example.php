@@ -5,7 +5,7 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araújo
-	Date: 2020-03-31
+	Date: 2020-04-13
 */
 
 // Changing "php.ini" during execution
