@@ -5,10 +5,10 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araújo
-	Date: 2020-03-31
+	Date: 2020-04-13
 */
 
-class DataManager{
+class DataManager {
 
     public static function exist($path){
 		if(gettype($path) != "resource"){
@@ -65,8 +65,13 @@ class DataManager{
 
     public static function copy($path, $newPath){
 		if(self::exist($path) == "FILE"){
+			if(self::exist($newPath) == "FOLDER"){
+				$newPath = self::path($newPath) . pathinfo($path)['basename'];
+			}
 			return copy($path, $newPath);
 		}else if(self::exist($path) == "FOLDER"){
+			$path = self::path($path);
+			$newPath = self::path($newPath);
 			if(!self::exist($newPath)){
 				self::folderCreate($newPath);
 			}
@@ -85,9 +90,14 @@ class DataManager{
 
     public static function move($path, $newPath){
 		if(self::exist($path) == "FILE"){
+			if(self::exist($newPath) == "FOLDER"){
+				$newPath = self::path($newPath) . pathinfo($path)['basename'];
+			}
             if(copy($path, $newPath))
                 return unlink($path);
         }else if(self::exist($path) == "FOLDER"){
+			$path = self::path($path);
+			$newPath = self::path($newPath);
 			if(!self::exist($newPath)){
 				self::folderCreate($newPath);
 			}
