@@ -5,8 +5,10 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araújo
-	Date: 2020-04-13
+	Date: 2020-04-20
 */
+
+namespace App\ClassLib;
 
 class DataManager {
 
@@ -260,8 +262,8 @@ class DataManager {
 				return false;
 			}
 		}else if(gettype($path) == "resource"){
-			$file = $path;
-			$size = 0;
+			$file = stream_get_meta_data($path)["uri"];
+			return self::fileSize($file, $precision);
 		}
 		$read = "";
 		$length = 8192;
@@ -309,13 +311,16 @@ class DataManager {
 		if(self::exist($path) == "FILE"){
 			$pathinfo = pathinfo($path);
 			$store = self::path($pathinfo["dirname"] . "/split_" . $pathinfo["basename"] . "/");
+			if(self::exist($store) == "FOLDER"){
+				self::delete($store);
+			}
 			if(self::folderCreate($store)){
 				$buffer = 1024 * 1024 * $buffer;
 				$parts = self::size($path, false) / $buffer;
 				$basename = basename($path);
 				$handle = fopen($path, 'rb');
 				for($i = 0; $i < $parts; $i++){
-					$partPath = $store . $basename . ".part$i";
+					$partPath = $store . "part$i";
 					self::fileCreate($partPath, fread($handle, $buffer));
 				}
 				fclose($handle);
@@ -331,7 +336,7 @@ class DataManager {
 			$dirname = self::path($pathinfo["dirname"] . "/" . $pathinfo["basename"] . "/../");
 			$files = self::folderScan($path, true);
 			$file0 = pathinfo($files[0]);
-			$newName = $dirname . "join_" . $file0["filename"];
+			$newName = $dirname . str_replace("split_", "", $pathinfo["basename"]);
 			for ($i = 0, $j = count($files); $i < $j; $i++) {
 				self::fileRead($files[$i], 4, function ($key, $value) use ($newName) {
 					self::fileAppend($newName, $value, false);
