@@ -5,7 +5,7 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araújo
-	Date: 2020-04-20
+	Date: 2020-04-21
 */
 
 namespace App\ClassLib;
@@ -13,13 +13,18 @@ namespace App\ClassLib;
 class DataManager {
 
     public static function exist($path){
-		if(gettype($path) != "resource"){
-			if(file_exists($path) && is_file($path)){
-				return "FILE";
-			}
-			if(file_exists($path) && is_dir($path)){
-				return "FOLDER";
-			}
+		if(gettype($path) == "resource"){
+			return "FP";			
+		}
+		if(file_exists($path) && is_file($path)){
+			return "FILE";
+		}
+		if(file_exists($path) && is_dir($path)){
+			return "FOLDER";
+		}		
+		if(($fp = @fopen($path, "rb") ?? false)){
+			fclose($fp);
+			return "FP";
 		}
 		return false;
 	}
@@ -104,6 +109,20 @@ class DataManager {
 		return false;
     }
 
+	private static function fpsize($fp){
+		$data = stream_get_meta_data($fp);
+		// var_export($data);
+		$bytes = 0;
+		if($data["seekable"] === true){
+			fseek($fp, 0);
+			while (!feof($fp)) {
+				$bytes += strlen(fgets($fp));					
+			}
+			fseek($fp, 0);
+		}
+		return $bytes;
+	}
+
 	public static function size($path, $convert = true, $precision = true){
 		$bytes = 0;
         if(self::exist($path) == "FOLDER"){
@@ -129,7 +148,12 @@ class DataManager {
 				$bytes *= -1;
 			}
 		}else if(gettype($path) == "resource"){
-			$bytes = self::fileSize($path, $precision);
+			$bytes = self::fpsize($path);
+		}else if(self::exist($path) == "FP"){
+			if(($fp = @fopen($path, "rb") ?? false)){
+				$bytes = self::fpsize($fp);
+				fclose($fp);
+			}
 		}
 		if($convert){
 			if($bytes >= 1073741824){
@@ -261,9 +285,6 @@ class DataManager {
 				fclose($file);
 				return false;
 			}
-		}else if(gettype($path) == "resource"){
-			$file = stream_get_meta_data($path)["uri"];
-			return self::fileSize($file, $precision);
 		}
 		$read = "";
 		$length = 8192;
