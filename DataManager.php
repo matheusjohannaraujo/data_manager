@@ -5,12 +5,163 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araújo
-	Date: 2020-04-21
+	Date: 2020-04-25
 */
 
 namespace App\ClassLib;
 
 class DataManager {
+
+	// INSTANCE
+	public $stream = -1;
+    public $size = 0;
+    public $start = 0;
+	public $fp = [];
+	
+	public function __construct($value = null){
+		if(is_string($value)){
+			$this->fopen($value);
+		}else if(is_array($value)){
+			for ($i = 0, $j = count($value); $i < $j; $i++) {
+				$this->fopen($value[$i]);
+			}
+		}
+	}
+
+    public function fopen($value, $mode = "rb"){
+        if(is_string($value)){
+            $value = self::path($value);
+            if(self::exist($value) == "FILE" || self::exist($value) == "FP"){
+                $fp = fopen($value, $mode);
+                $size = self::size($fp, false);
+                $this->size += $size;
+                $this->fp[] = [
+                    "fp" => $fp,
+                    "size" => $size,
+                    "data" => stream_get_meta_data($fp)
+                ];
+            }
+        }else if(gettype($value) == "resource"){
+            $size = self::size($value, false);
+            $this->fp[] = [
+                "fp" => $value,
+                "size" => $size,
+                "data" => stream_get_meta_data($value)
+            ];
+        }
+    }
+
+    public function fmemory(){
+        if(($fpMem = @fopen("php://memory", "w+") ?? false) && count($this->fp) > 0){
+            rewind($fpMem);
+            $this->size = 0;
+            foreach ($this->fp as $key => $value) {
+                while (!feof($value["fp"])) {
+                    $str = fread($value["fp"], 1024);                    
+                    fwrite($fpMem, $str);
+                    $this->size += strlen($str);
+                }
+                fclose($value["fp"]);
+                unset($this->fp[$key]);
+            }
+            $this->fp = [];
+            rewind($fpMem);
+            $this->fp[] = [
+                "fp" => $fpMem,
+                "size" => $this->size,
+                "path" => stream_get_meta_data($fpMem)["uri"]
+            ];
+            return true;
+        }
+        return false;
+    }
+
+    public function feof(){        
+        if($this->stream == -1){
+            $this->fseek(0);
+        }
+        $bool = feof($this->fp[$this->stream]["fp"]);
+        if($bool && $this->start < $this->size){
+            $bool = false;
+        }
+        return $bool;
+    }
+
+    public function fseek($index){
+        $this->start = $index;
+        $this->setStream($index);
+        if($this->stream > -1){
+            fseek($this->fp[$this->stream]["fp"], $index);
+        }
+    }    
+
+    public function fgets(){        
+        $str = "";
+        $start = $this->start;
+        $this->setStream($start);        
+        if($this->stream > -1){
+            $str = fgets($this->fp[$this->stream]["fp"]);
+            $this->start += strlen($str);
+            if($str){                
+                if(!preg_match("/\n/", $str)){
+                    if(!$this->feof()){
+                        $str .= $this->fgets();
+                    }
+                }
+            }
+        }
+        return $str;
+    }
+
+    public function fread($buffer){
+        $str = "";
+        $start = $this->start;
+        $this->setStream($start);
+        if($this->stream > -1){
+            $str = fread($this->fp[$this->stream]["fp"], $buffer);
+            $len = strlen($str);
+            $this->start += $len;
+            $buffer = $buffer - $len;
+            if($this->start < $this->size && $buffer > 0){
+                $str .= $this->fread($buffer);
+            }
+        }
+        return $str;
+    }
+
+    private function setStream(&$start){
+        $size = 0;
+        $i = 0;
+        if($this->start < $this->size){
+            $this->stream = -1;
+            foreach ($this->fp as $key => $value) {
+                $size += $value["size"];
+                if($start < $size){
+                    $this->stream = $key;
+                    if($i >= 1){
+                        $x = $size - $value["size"];
+                        $start = $start - $x;
+                    }
+                    break;
+                }
+                $i++;
+            }
+        }else{
+            if($this->fp[$this->stream]["fp"] ?? false){
+                fseek($this->fp[$this->stream]["fp"], -1);
+            }
+        }
+    }
+
+    public function fclose(){
+        foreach ($this->fp as $key => $value) {
+            fclose($value["fp"]);
+            unset($this->fp[$key]);
+        }
+        $this->fp = [];
+	}
+	
+	// STATIC
 
     public static function exist($path){
 		if(gettype($path) == "resource"){
