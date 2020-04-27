@@ -8,8 +8,6 @@
 	Date: 2020-04-25
 */
 
-namespace App\ClassLib;
-
 class DataManager {
 
 	// INSTANCE
