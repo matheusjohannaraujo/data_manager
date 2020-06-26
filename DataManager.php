@@ -5,8 +5,12 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araujo
-	Date: 2020-06-18
+	Date: 2020-06-26
 */
+
+// namespace Lib;
+
+// use ZipArchive;
 
 class DataManager
 {
@@ -507,7 +511,7 @@ class DataManager
             self::fileRead($path, 4, function ($key, $value) use ($newName) {
                 self::fileAppend($newName, base64_encode($value) . "\r\n", false);
             });
-            DataManager::fileAppendClose($newName);
+            self::fileAppendClose($newName);
             if ($del) {
                 if (self::delete($path)) {
                     if (rename($newName, $path)) {
@@ -527,7 +531,7 @@ class DataManager
             self::fileRead($path, 4, function ($key, $value) use ($newName) {
                 self::fileAppend($newName, base64_decode($value), false);
             });
-            DataManager::fileAppendClose($newName);
+            self::fileAppendClose($newName);
             if ($del) {
                 if (self::delete($path)) {
                     if (rename($newName, $path)) {
@@ -762,6 +766,49 @@ class DataManager
             $zip->close();
         }
         return $return;
+    }
+
+    public static function zipUnzipFolder(string $path, string $mode, string $pass = "") {
+        $mode = strtolower($mode);
+        if ($mode == "unzip" || $mode == "zip") {        
+            $scan = self::folderScan($path);
+            // var_dump($scan);
+            foreach ($scan as $key => $value) {
+                // var_dump($value);
+                $name = $value["name"];
+                $indexMd5 = strpos($name, "_md5");
+                $indexZip = strpos($name, ".zip");
+                if ($mode == "unzip" && $indexMd5 !== false && $indexMd5 >= 0 && $indexZip !== false && $indexZip >= 0 && $value["type"] == "FILE") {
+                    $md5 = substr($name, 0, $indexZip);
+                    $md5 = substr($md5, $indexMd5 + 4);
+                    $name = substr($name, 0, $indexMd5);
+                    // echo $indexMd5, " | ", $indexZip, " | ", $name, " | ", $md5;
+                    $pathExtract = self::path($path . $name);
+                    if (self::zipExtract($value["path"], $path, $pass)) {
+                        $md5Extract = uniqid();
+                        if (self::exist($pathExtract) == "FILE") {
+                            $md5Extract = self::fileMd5($pathExtract);
+                        } else if (self::exist($pathExtract) == "FOLDER") {
+                            $md5Extract = self::folderMd5($pathExtract);
+                        }
+                        echo "[Unzip] ";
+                        if ($md5Extract == $md5) {
+                            echo "Success | Match MD5 | ", (self::delete($value["path"]) ? $pathExtract : "Error delete: " . $value["path"]), "\r\n";
+                        } else {
+                            echo "Error | No Match MD5 | ", (self::delete($pathExtract) ? $value["path"] : "Error delete: " . $pathExtract), "\r\n";
+                        }
+                    } else {
+                        self::delete($pathExtract);
+                    }        
+                } else if ($mode == "zip" && $indexZip === false && ($value["type"] == "FILE" || $value["type"] == "FOLDER")) {
+                    $zipName = $value["path"] . "_md5" . $value["md5"] . ".zip";
+                    echo "[Zip] ";
+                    if (self::zipCreate($zipName, $value["path"], $pass)) {
+                        echo (self::delete($value["path"]) ? "Success: " : "Error: "), "$zipName\r\n";
+                    }
+                }   
+            }
+        }
     }
 
 }
