@@ -5,7 +5,7 @@
 	Country: Brasil
 	State: Pernambuco
 	Developer: Matheus Johann Araujo
-	Date: 2020-12-20
+	Date: 2022-04-01
 */
 
 // Altera o "php.ini" em memória durante a execução
@@ -39,7 +39,6 @@ echo "<hr>";
 usleep($time);
 
 echo "Abrindo o arquivo de nome 'example_file_a.txt' para leitura.<br>";
-// Reading the file of [name, additional parameter]
 var_export(DataManager::fileRead("example_file_a.txt"));
 echo "<hr>";
 
